@@ -1,3 +1,7 @@
+# Cleanup the framework and change names before pushing it to develop and then start working on the project. 
+## Master and develop branches are restricted, work needs to be done in other branches and approved to be moved into develop and master branches
+
+
 # CGRA OpenGL Base Project
 
 # Requirements
