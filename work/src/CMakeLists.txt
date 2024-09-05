@@ -17,6 +17,8 @@ SET(sources
 
 	"main.cpp"
 
+	"VoxelGrid.cpp"
+	"VoxelGrid.hpp"
 	"CMakeLists.txt"
 )
 

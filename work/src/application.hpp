@@ -7,7 +7,7 @@
 // project
 #include "opengl.hpp"
 #include "basic_model.hpp"
-
+#include "VoxelGrid.hpp"
 
 // Main application class
 //
@@ -29,6 +29,7 @@ private:
 	// contains a shader, a model transform
 	// a mesh, and other model information (color etc.)
 	basic_model m_model;
+	VoxelGrid m_voxelGrid;
 
 public:
 	// setup
