@@ -41,7 +41,7 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 	m_model.mesh = teapot_mesh;
 	m_model.color = glm::vec3(1, 0, 0);
 	m_model.modelTransform = glm::mat4(1);
-	m_voxelGrid = VoxelGrid(glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 10.f, 10.f, 10.f }, 1.f);
+	//m_voxelGrid = VoxelGrid(glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 10.f, 10.f, 10.f }, 1.f);
 }
 
 
