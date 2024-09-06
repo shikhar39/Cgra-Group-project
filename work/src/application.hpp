@@ -29,7 +29,7 @@ private:
 	// contains a shader, a model transform
 	// a mesh, and other model information (color etc.)
 	basic_model m_model;
-	//VoxelGrid m_voxelGrid;
+	VoxelGrid m_voxelGrid;
 
 public:
 	// setup

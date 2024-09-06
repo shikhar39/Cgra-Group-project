@@ -1,27 +1,22 @@
 #include "VoxelGrid.hpp"
+#include <iostream>
 
 using namespace std;
-float VoxelGrid::m_width = 0.1f;
+using namespace glm;
 
 
 VoxelGrid::VoxelGrid(glm::vec3 origin, glm::vec3 farEnd, float width) {
 	
 	m_width = width;
-	int count_x = (farEnd.x - origin.x) / width;
-	int count_y = (farEnd.y - origin.y) / width;
-	int count_z = (farEnd.z - origin.z) / width;
+	m_countX = (farEnd.x - origin.x) / width;
+	m_countY = (farEnd.y - origin.y) / width;
+	m_countZ = (farEnd.z - origin.z) / width;
 
-	//m_grid = vector<vector<vector<Voxel>>>(count_z, vector<vector<Voxel> >(count_y, vector <Voxel>(count_x)));
-	m_grid.resize(count_x);
-	for (int i = 0; i < count_x; ++i) {
-		m_grid[i].resize(count_y);
-		for (int j = 0; j < count_y; ++j) {
-			m_grid[i][j].resize(count_z);
-		}
-	}
-	for (int i = 0; i < count_x; i++) {
-		for (int j = 0; j < count_y; j++) {
-			for (int k = 0; k < count_z; k++) {
+	m_grid = vector<vector<vector<Voxel>>> (m_countX, vector<vector<Voxel>> (m_countY, vector<Voxel> (m_countZ)));
+	
+	for (int i = 0; i < m_countX; i++) {
+		for (int j = 0; j < m_countY; j++) {
+			for (int k = 0; k < m_countZ; k++) {
 				m_grid[i][j][k] = Voxel(glm::ivec3{i, j, k}, AIR);
 			}
 		}
@@ -32,6 +27,28 @@ void VoxelGrid::UpdateVoxel(glm::ivec3 index, voxelType type) {
 	m_grid[index.x][index.y][index.z].UpdateType(type);
 }
 
+void const VoxelGrid::Print() {
+	for (int i = 0; i < m_countX; i++) {
+		for (int j = 0; j < m_countY; j++) {
+			for (int k = 0; k < m_countZ; k++) {
+				ivec3 index = m_grid[i][j][k].GetIndex();
+				std::cout << "{" << index.x << ", " << index.y << ", " << index.z << ", " << m_grid[i][j][k].GetType() << "}, ";
+			}
+			cout << endl;
+		}
+		cout << "========================================================" << endl;
+	}
+}
+
 void VoxelGrid::Voxel::UpdateType(voxelType type){
 	m_type = type;
+}
+
+std::string const VoxelGrid::Voxel::GetType()
+{
+	if (m_type == TERRAIN) return "Terrain";
+	if (m_type == TALL_CELL) return "TallCell";
+	if (m_type == REG_CELL) return "RegCell";
+	if (m_type == AIR) return "Air";
+
 }
