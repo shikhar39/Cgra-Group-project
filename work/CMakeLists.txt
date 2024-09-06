@@ -14,7 +14,7 @@ include(CGRAFunctions)
 set(CGRA_PROJECT "base" CACHE STRING "CGRA Project Name")
 
 # Project
-project("CGRA_PROJECT_${CGRA_PROJECT}" CXX C)
+project("CGRA_GROUP_PROJECT_${CGRA_PROJECT}" CXX C)
 
 # Enable IDE Project Folders
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)

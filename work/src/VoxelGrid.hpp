@@ -22,8 +22,8 @@ private:
 		Voxel(glm::ivec3 index, voxelType type) : m_index(index), m_type(type) {};
 		void UpdateType(voxelType type);
 		Voxel() : Voxel({ 0,0,0 }, AIR) {};
-		std::string const GetType();
-		glm::ivec3 const GetIndex() { return m_index; };
+		std::string GetType() const;
+		glm::ivec3 GetIndex() const { return m_index; };
 	};
 
 
@@ -36,7 +36,7 @@ public:
 	VoxelGrid(glm::vec3 origin, glm::vec3 farEnd, float width);
 	VoxelGrid() : VoxelGrid(glm::vec3{0.f, 0.f, 0.f}, glm::vec3{ 1.f, 1.f, 1.f }, 0.1f) {};
 	void UpdateVoxel(glm::ivec3 index, voxelType type);
-	glm::ivec3 const GetGridSize() { return glm::vec3{m_countX, m_countY, m_countZ}; };	
-	void const Print();
+	glm::ivec3 GetGridSize() const { return glm::vec3{m_countX, m_countY, m_countZ}; };
+	void Print() const;
 
 };

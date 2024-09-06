@@ -44,7 +44,14 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 	m_voxelGrid = VoxelGrid(glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 10.f, 6.f, 5.f }, 1.f);
 	ivec3 size = m_voxelGrid.GetGridSize();
 	
-
+	for (int i = 0; i < size.x; i++) {
+		for (int j = 0; j < size.y; j++) {
+			for (int k = 0; k < size.z/2; k++) {
+				m_voxelGrid.UpdateVoxel({i, j, k}, VoxelGrid::TERRAIN);
+			}
+		}
+	}
+	m_voxelGrid.Print();
 
 }
 

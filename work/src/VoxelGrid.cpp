@@ -27,7 +27,7 @@ void VoxelGrid::UpdateVoxel(glm::ivec3 index, voxelType type) {
 	m_grid[index.x][index.y][index.z].UpdateType(type);
 }
 
-void const VoxelGrid::Print() {
+void VoxelGrid::Print() const {
 	for (int i = 0; i < m_countX; i++) {
 		for (int j = 0; j < m_countY; j++) {
 			for (int k = 0; k < m_countZ; k++) {
@@ -44,7 +44,7 @@ void VoxelGrid::Voxel::UpdateType(voxelType type){
 	m_type = type;
 }
 
-std::string const VoxelGrid::Voxel::GetType()
+std::string VoxelGrid::Voxel::GetType() const
 {
 	if (m_type == TERRAIN) return "Terrain";
 	if (m_type == TALL_CELL) return "TallCell";
