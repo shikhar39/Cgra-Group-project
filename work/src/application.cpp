@@ -44,6 +44,8 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 	m_voxelGrid = VoxelGrid(glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 10.f, 6.f, 5.f }, 1.f);
 	ivec3 size = m_voxelGrid.GetGridSize();
 	
+	m_computeShader = ComputeShader(CGRA_SRCDIR + std::string("//res//shaders//Compute.glsl"));
+
 	for (int i = 0; i < size.x; i++) {
 		for (int j = 0; j < size.y; j++) {
 			for (int k = 0; k < size.z/2; k++) {
@@ -53,6 +55,47 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 	}
 	m_voxelGrid.Print();
 
+	float vertices[] = {
+		-0.8f, -0.8f,  0.0f,  0.f, 0.f,
+		 0.8f, -0.8f,  0.0f,  1.f, 0.f,
+		-0.8f,  0.8f,  0.0f,  0.f, 1.f,
+		 0.8f,  0.8f,  0.0f,  1.f, 1.f,
+	};
+	
+	unsigned int indices[] = {
+		0, 1, 2, 1, 2, 3
+	};
+	glGenVertexArrays(1, &vao);
+	glGenBuffers(1, &vbo);
+	glGenBuffers(1, &ibo);
+
+	glBindVertexArray(vao);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GL_FLOAT), (void*)0);
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GL_FLOAT), (void*) (3 * sizeof(GL_FLOAT)));
+	
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+	index_count = 6;
+	glBindVertexArray(0);
+
+	glGenTextures(1, &texture);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, TEXTURE_WIDTH, TEXTURE_HEIGHT, 0, GL_RGBA, 
+				GL_FLOAT, NULL);
+
+	glBindImageTexture(0, texture, 0, GL_FALSE, 0, GL_READ_WRITE , GL_RGBA32F);
 }
 
 
@@ -68,7 +111,7 @@ void Application::render() {
 	// clear the back-buffer
 	glClearColor(0.3f, 0.3f, 0.4f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
-
+	/*
 	// enable flags for normal/forward rendering
 	glEnable(GL_DEPTH_TEST); 
 	glDepthFunc(GL_LESS);
@@ -81,9 +124,30 @@ void Application::render() {
 	if (m_show_grid) cgra::drawGrid(view, proj);
 	if (m_show_axis) cgra::drawAxis(view, proj);
 	glPolygonMode(GL_FRONT_AND_BACK, (m_showWireframe) ? GL_LINE : GL_FILL);
+	*/
 
 	// draw the model
-	m_model.draw(view, proj);
+	// m_model.draw(view, proj);
+	
+
+	m_computeShader.use();
+	// computeShader.setFloat("t", currentFrame);
+	glUniform1f(glGetUniformLocation(m_computeShader.ID, "t"), glfwGetTime());
+
+	glDispatchCompute((unsigned int)TEXTURE_WIDTH/ 10, (unsigned int)TEXTURE_HEIGHT/ 10, 1);
+
+	// make sure writing to image has finished before read
+	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+	// screenQuad.use();
+	glUseProgram(m_model.shader);
+	// screenQuad.setInt("tex", 0);
+	glUniform1i(glGetUniformLocation(m_model.shader, "tex"), 0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glBindVertexArray(vao);
+	glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, 0);
+	
 }
 
 

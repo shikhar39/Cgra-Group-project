@@ -16,7 +16,8 @@ SET(sources
 	"opengl.hpp"
 
 	"main.cpp"
-
+	"ComputeShader.cpp"
+	"ComputeShader.hpp"
 	"VoxelGrid.cpp"
 	"VoxelGrid.hpp"
 	"CMakeLists.txt"

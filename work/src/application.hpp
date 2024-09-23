@@ -8,6 +8,7 @@
 #include "opengl.hpp"
 #include "basic_model.hpp"
 #include "VoxelGrid.hpp"
+#include "ComputeShader.hpp"
 
 // Main application class
 //
@@ -30,6 +31,15 @@ private:
 	// a mesh, and other model information (color etc.)
 	basic_model m_model;
 	VoxelGrid m_voxelGrid;
+	ComputeShader m_computeShader;
+	const unsigned int TEXTURE_WIDTH = 1000, TEXTURE_HEIGHT = 1000;
+	unsigned int texture;
+
+	GLuint vao = 0;
+	GLuint vbo = 0;
+	GLuint ibo = 0;
+	GLenum mode = 0; // mode to draw in, eg: GL_TRIANGLES
+	int index_count = 0; // how many indicies to draw (no primitives)
 
 public:
 	// setup

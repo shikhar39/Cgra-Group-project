@@ -39,7 +39,7 @@ int main() {
 	}
 
 	// force OpenGL to create a 3.3 core context
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
@@ -64,7 +64,7 @@ int main() {
 	// make the window's context current.
 	// if we have multiple windows we will need to switch contexts
 	glfwMakeContextCurrent(window);
-
+	
 	// initialize GLEW
 	// must be done after making a GL context current (glfwMakeContextCurrent in this case)
 	glewExperimental = GL_TRUE; // required for full GLEW functionality for OpenGL 3.0+
