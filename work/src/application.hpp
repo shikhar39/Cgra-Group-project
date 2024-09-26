@@ -9,17 +9,28 @@
 #include "basic_model.hpp"
 #include "VoxelGrid.hpp"
 #include "ComputeShader.hpp"
-
+#define NUM_PARTICLES 100000 * 1000
 // Main application class
 //
 class Application {
 private:
+	struct particle {
+		glm::vec4 pos; // positions
+		glm::vec4 vel;
+	};
+
 	// window
 	glm::vec2 m_windowsize;
 	GLFWwindow *m_window;
 
 	// oribital camera
+	float m_pitch = .86;
+	float m_yaw = -.86;
 	float m_distance = 20.0;
+
+	// last input
+	bool m_leftMouseDown = false;
+	glm::vec2 m_mousePosition;
 
 	// drawing flags
 	bool m_show_axis = false;
@@ -40,6 +51,7 @@ private:
 	GLuint ibo = 0;
 	GLenum mode = 0; // mode to draw in, eg: GL_TRIANGLES
 	int index_count = 0; // how many indicies to draw (no primitives)
+	GLuint ssbo = 0;
 
 public:
 	// setup
