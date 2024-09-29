@@ -55,10 +55,17 @@ namespace cgra {
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(mesh_vertex), (void *)(offsetof(mesh_vertex, norm)));
 
-		// do the same thing for UVs but bind it to location=2 - the data is treated in lots of 2 (2 floats = vec2)
+		// same thing for tangent
 		glEnableVertexAttribArray(2);
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(mesh_vertex), (void *)(offsetof(mesh_vertex, uv)));
+		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(mesh_vertex), (void *)(offsetof(mesh_vertex, tan)));
 
+		// same thing for bitangent
+		glEnableVertexAttribArray(3);
+		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(mesh_vertex), (void *)(offsetof(mesh_vertex, bitan)));
+
+		// do the same thing for UVs but bind it to location=4 - the data is treated in lots of 2 (2 floats = vec2)
+		glEnableVertexAttribArray(4);
+		glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, sizeof(mesh_vertex), (void *)(offsetof(mesh_vertex, uv)));
 
 		// IBO
 		//

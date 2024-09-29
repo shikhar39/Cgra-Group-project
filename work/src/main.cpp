@@ -64,7 +64,6 @@ int main() {
 	// make the window's context current.
 	// if we have multiple windows we will need to switch contexts
 	glfwMakeContextCurrent(window);
-	glfwSwapInterval(0);
 	
 	// initialize GLEW
 	// must be done after making a GL context current (glfwMakeContextCurrent in this case)

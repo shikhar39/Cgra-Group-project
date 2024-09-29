@@ -38,6 +38,8 @@ namespace cgra {
 	struct mesh_vertex {
 		glm::vec3 pos{0};
 		glm::vec3 norm{0};
+		glm::vec3 tan{0};
+		glm::vec3 bitan{0};
 		glm::vec2 uv{0};
 	};
 
