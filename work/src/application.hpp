@@ -19,6 +19,11 @@ private:
 		glm::vec4 vel;
 	};
 
+	struct waterMeshVertex {
+		glm::vec4 pos;
+		glm::vec4 normal;
+	};
+
 	// window
 	glm::vec2 m_windowsize;
 	GLFWwindow *m_window;
@@ -71,10 +76,13 @@ private:
 	unsigned int texture;
 	glm::uint num_particles = 1000;
 	int drawCount = 100; 
+
+	const size_t MAX_VERTICES = 1000000;
 	GLuint vao = 0;
 	GLuint vbo = 0;
 	GLuint ibo = 0;
 	GLenum mode = 0; // mode to draw in, eg: GL_TRIANGLES
+	GLuint vertexCountBuffer;
 	int index_count = 0; // how many indicies to draw (no primitives)
 	GLuint ssbo = 0;
 

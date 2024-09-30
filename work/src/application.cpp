@@ -17,6 +17,7 @@
 #include "cgra/cgra_image.hpp"
 #include "cgra/cgra_shader.hpp"
 #include "cgra/cgra_wavefront.hpp"
+#include "VoxelGrid.hpp"
 
 
 using namespace std;
@@ -60,6 +61,8 @@ void Application::load_sphere_lat_long(float radius, int latDiv, int longDiv ) {
 
 
 }
+
+
 Application::Application(GLFWwindow *window) : m_window(window) {
 	
 	// build the shader for the model
@@ -108,11 +111,21 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 	glGenVertexArrays(1, &vao);
 	glGenBuffers(1, &vbo);
 	glGenBuffers(1, &ibo);
+	glGenBuffers(1, &vertexCountBuffer);
 
+
+	glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, vertexCountBuffer);
+	glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), nullptr, GL_DYNAMIC_DRAW);
+	
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(waterMeshVertex), nullptr, GL_DYNAMIC_DRAW);
+	
+	// Unbind buffers
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
+	/*
 	glBindVertexArray(vao);
 
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GL_FLOAT), (void*)0);
@@ -124,34 +137,36 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 	index_count = 6;
 	glBindVertexArray(0);
+	*/
 
 	glGenBuffers(1, &ssbo);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, num_particles * sizeof(particle), NULL, GL_STATIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, m_voxelGrid.GetGridTotalCount() * sizeof(Voxel), NULL, GL_DYNAMIC_DRAW);
 
 	GLint bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT ; // the invalidate makes a big difference when re-writing
+	/*
 	particle *points = (particle *) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, num_particles * sizeof(particle), bufMask );
 	for( int i = 0; i < num_particles; i++ ) {
-		// points[ i ].pos = vec4(i % 100, 10.f, int(i / 100), 1.0f);
 		points[i].pos = vec4(randomFloat(-1.f, 1.f), 0.f, randomFloat(-1.f, 1.f), 1.0f);
 		points[ i ].vel = vec4(0.f, 0.f, 0.f, 1.0f);
 
 	}
- 	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
-	/*
-	glGenTextures(1, &texture);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, TEXTURE_WIDTH, TEXTURE_HEIGHT, 0, GL_RGBA, 
-				GL_FLOAT, NULL);
-
-	glBindImageTexture(0, texture, 0, GL_FALSE, 0, GL_READ_ONLY , GL_RGBA32F);
 	*/
+	glm::ivec3 voxelDim = m_voxelGrid.GetGridSize();
+	Voxel* voxels = (Voxel *)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, m_voxelGrid.GetGridTotalCount() * sizeof(Voxel), bufMask);
+	for (int i = 0; i < num_particles; i++) {
+		uint x, y, z;
+		z = i / (voxelDim.x * voxelDim.y);
+		uint temp = i % (voxelDim.x * voxelDim.y);
+		y = temp / voxelDim.x;
+		x = temp % voxelDim.x;
+
+		voxels[i] = m_voxelGrid.m_grid[x][y][z];
+
+	}
+
+ 	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
 

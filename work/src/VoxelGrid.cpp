@@ -23,7 +23,7 @@ VoxelGrid::VoxelGrid(glm::vec3 origin, glm::vec3 farEnd, float width) {
 	}
 }
 
-void VoxelGrid::UpdateVoxel(glm::ivec3 index, voxelType type) {
+void VoxelGrid::UpdateVoxel(glm::ivec3 index, int type) {
 	m_grid[index.x][index.y][index.z].UpdateType(type);
 }
 
@@ -40,11 +40,11 @@ void VoxelGrid::Print() const {
 	}
 }
 
-void VoxelGrid::Voxel::UpdateType(voxelType type){
+void Voxel::UpdateType(int type){
 	m_type = type;
 }
 
-std::string VoxelGrid::Voxel::GetType() const
+std::string Voxel::GetType() const
 {
 	if (m_type == TERRAIN) return "Terrain";
 	if (m_type == TALL_CELL) return "TallCell";
