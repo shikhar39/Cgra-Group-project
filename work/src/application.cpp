@@ -92,7 +92,7 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 	for (int i = 0; i < size.x; i++) {
 		for (int j = 0; j < size.y; j++) {
 			for (int k = 0; k < size.z/2; k++) {
-				m_voxelGrid.UpdateVoxel({i, j, k}, VoxelGrid::TERRAIN);
+				m_voxelGrid.UpdateVoxel({i, j, k}, TERRAIN);
 			}
 		}
 	}
@@ -154,7 +154,7 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 	*/
 	glm::ivec3 voxelDim = m_voxelGrid.GetGridSize();
 	Voxel* voxels = (Voxel *)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, m_voxelGrid.GetGridTotalCount() * sizeof(Voxel), bufMask);
-	for (int i = 0; i < num_particles; i++) {
+	for (int i = 0; i < m_voxelGrid.GetGridTotalCount(); i++) {
 		uint x, y, z;
 		z = i / (voxelDim.x * voxelDim.y);
 		uint temp = i % (voxelDim.x * voxelDim.y);
@@ -215,19 +215,26 @@ void Application::render() {
 	// draw the model
 	// m_model.draw(view, proj);
 	
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0 ,ssbo);
-
-	/*
 	m_computeShader.use();
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0 ,ssbo);
+	glUniform1f(glGetUniformLocation(m_computeShader.ID, "gridWidth"), m_voxelGrid.m_width);
+	GLuint zero = 0;
+	glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, vertexCountBuffer);
+	glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint), &zero);
+	glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
+
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, vbo);         // vertexPositions
+	glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 1, vertexCountBuffer);    // vertexCount
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssbo); 
 	// computeShader.setFloat("t", currentFrame);
 	static float time = glfwGetTime();
-	glUniform1f(glGetUniformLocation(m_computeShader.ID, "t"), glfwGetTime() - time);
 	time = glfwGetTime();
 
-	glDispatchCompute((unsigned int)drawCount/ 10, 1, 1);
+	glDispatchCompute((unsigned int)m_voxelGrid.GetGridTotalCount()/ 100, 1, 1);
 
 	// make sure writing to image has finished before read
-	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_ATOMIC_COUNTER_BARRIER_BIT);
+	/*
 	*/
 
 	glUseProgram(m_model.shader);
