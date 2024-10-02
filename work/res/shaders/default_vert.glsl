@@ -7,9 +7,10 @@ layout(location = 4) in vec2 aTexCoord;
 struct waterMeshVertex {
     vec4 pos;
     vec4 normal;
+    vec4 color;
 };
 
-layout (std430, binding = 0) buffer VertexBuffer {
+layout (std430, binding = 1) buffer VertexBuffer {
     waterMeshVertex vertexPositions[]; // VBO to store vertex positions
 };
 uniform mat4 uProjectionMatrix;
@@ -20,6 +21,7 @@ out VertexData {
 	vec3 position;
 	vec3 normal;
 	vec2 textureCoord;
+    vec4 color;
 } v_out;
 	
 void main()
@@ -28,5 +30,6 @@ void main()
     v_out.position = (uViewMatrix * vec4(position, 1.0)).xyz;
     v_out.normal = normalize((uViewMatrix * vec4(aNormal, 0)).xyz);
     v_out.textureCoord = aTexCoord;
+    v_out.color = vertexPositions[gl_InstanceID].color;
     gl_Position = uProjectionMatrix * uViewMatrix * vec4(position, 1.0);
 }

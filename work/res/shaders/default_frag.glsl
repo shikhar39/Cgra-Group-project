@@ -7,6 +7,7 @@ in VertexData {
 	vec3 position;
 	vec3 normal;
 	vec2 textureCoord;
+	vec4 color;
 } f_in;
 	
 void main()
@@ -31,6 +32,6 @@ void main()
 	vec3 reflected = reflect(lightDir, norm);
 	float specular = specularStrength * pow(max(dot(reflected, normalize(ucamPos-f_in.position)), 0.0f), shininess);
 
-	vec3 result = vec3(1.f, 1.f, 0.f) * lightColor * (ambient + diffuse + specular);
-	FragColor = vec4(result, 0.2f);
+	vec3 result = f_in.color.rgb * lightColor * (ambient + diffuse + specular);
+	FragColor = vec4(result,f_in.color.a);
 }

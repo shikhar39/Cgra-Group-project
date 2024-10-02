@@ -22,6 +22,7 @@ private:
 	struct waterMeshVertex {
 		glm::vec4 pos;
 		glm::vec4 normal;
+		glm::vec4 color;
 	};
 
 	// window
@@ -30,14 +31,14 @@ private:
 
 	// oribital camera
 	float m_cam_rotation_scale = 0.05f;
-	float m_cam_speed = 0.01f;
+	float m_cam_speed = 0.09f;
 
 	float m_pitch = .86;
 	float m_yaw = -.86;
 	float m_distance = 20.0;
 	glm::vec3 m_cam_pos = glm::vec3(0.0f, 5.0f, 5.0f);
 	glm::vec3 m_cam_dir = glm::vec3(0.0f, -1.0f, -1.0f);
-	glm::vec3 m_cam_up = glm::vec3(0.0f, 1.0f, 0.0f);
+	glm::vec3 m_cam_up = glm::vec3(0.0f, 0.0f, 1.0f);
 
 	//Keyboard and Mouse input states
 	bool m_isMouse1Pressed = false;
@@ -63,28 +64,30 @@ private:
 
 	//Shape properties
 	float m_sp_rad = 0.1f;
-	int m_latDivision = 25;
-	int m_longDivision = 25;
+	int m_latDivision = 8;
+	int m_longDivision = 8;
 
 	// basic model
 	// contains a shader, a model transform
 	// a mesh, and other model information (color etc.)
-	basic_model m_model;
+	basic_model m_model; 
 	VoxelGrid m_voxelGrid;
 	ComputeShader m_computeShader;
-	const unsigned int TEXTURE_WIDTH = 1000, TEXTURE_HEIGHT = 1000;
-	unsigned int texture;
+
 	glm::uint num_particles = 1000;
 	int drawCount = 100; 
 
 	const size_t MAX_VERTICES = 1000000;
+	GLuint vertexCountBuffer;
+	GLuint ssbo = 0;
+	GLuint ssbo2 = 0;
+	/*
 	GLuint vao = 0;
 	GLuint vbo = 0;
 	GLuint ibo = 0;
 	GLenum mode = 0; // mode to draw in, eg: GL_TRIANGLES
-	GLuint vertexCountBuffer;
 	int index_count = 0; // how many indicies to draw (no primitives)
-	GLuint ssbo = 0;
+	*/
 
 public:
 	// setup

@@ -84,20 +84,25 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 	m_model.modelTransform = glm::mat4(1);
 
 
-	m_voxelGrid = VoxelGrid(glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 10.f, 6.f, 5.f }, 1.f);
+	m_voxelGrid = VoxelGrid(glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 10.f, 6.f, 5.f }, 0.1f);
 	ivec3 size = m_voxelGrid.GetGridSize();
 	
 	m_computeShader = ComputeShader(CGRA_SRCDIR + std::string("//res//shaders//Compute.glsl"));
 
 	for (int i = 0; i < size.x; i++) {
 		for (int j = 0; j < size.y; j++) {
-			for (int k = 0; k < size.z/2; k++) {
+			float temp = randomFloat(0, size.z); 
+			for (int k = 0; k < temp; k++) {
 				m_voxelGrid.UpdateVoxel({i, j, k}, TERRAIN);
+			}
+			for (int k = temp; k < size.z; k++) {
+				m_voxelGrid.UpdateVoxel({i, j, k}, TALL_CELL);
 			}
 		}
 	}
-	m_voxelGrid.Print();
+	// m_voxelGrid.Print();
 
+	/*
 	float vertices[] = {
 		-0.8f, -0.8f,  0.0f,  0.f, 0.f,
 		 0.8f, -0.8f,  0.0f,  1.f, 0.f,
@@ -111,20 +116,24 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 	glGenVertexArrays(1, &vao);
 	glGenBuffers(1, &vbo);
 	glGenBuffers(1, &ibo);
+	glBindVertexArray(vao);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(waterMeshVertex), nullptr, GL_DYNAMIC_DRAW);
+	glBindVertexArray(0);
+	*/
+	
+
+
 	glGenBuffers(1, &vertexCountBuffer);
 
 
 	glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, vertexCountBuffer);
-	glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), nullptr, GL_DYNAMIC_DRAW);
-	
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(waterMeshVertex), nullptr, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), nullptr, GL_STREAM_DRAW);
+	glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
 	
 	// Unbind buffers
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
+	// glBindBuffer(GL_ARRAY_BUFFER, 0);
 	/*
-	glBindVertexArray(vao);
 
 
 	glEnableVertexAttribArray(0);
@@ -136,8 +145,16 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 	index_count = 6;
-	glBindVertexArray(0);
 	*/
+
+	glGenBuffers(1, &ssbo2);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo2);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, m_voxelGrid.GetGridTotalCount() * sizeof(waterMeshVertex), NULL, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+
+
+
 
 	glGenBuffers(1, &ssbo);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
@@ -185,16 +202,13 @@ void Application::render() {
 	
 	// enable flags for normal/forward rendering
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);
 	glDepthFunc(GL_LESS);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	// glEnable(GL_BLEND);
+	// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	// calculate the projection and view matrix
+	// ############################ calculate the projection and view matrix ##########################
 	mat4 proj = perspective(1.f, float(width) / height, 0.1f, 1000.f);
-	// view matrix
-	mat4 view;
-	//vec3 pos, dir, up;
-	//m_cam_pos = vec3(m_posx, m_posy, m_posz);
+	
 	if (m_isWPressed) m_cam_pos += m_cam_dir * m_cam_speed;
 	if (m_isSPressed) m_cam_pos -= m_cam_dir * m_cam_speed;
 	if (m_isAPressed) m_cam_pos -= normalize(cross(m_cam_dir, m_cam_up)) * m_cam_speed;
@@ -205,51 +219,62 @@ void Application::render() {
 	if (m_isRightPressed) m_cam_pos += normalize(cross(m_cam_dir, m_cam_up)) * m_cam_speed;
 
 
-	view = lookAt(m_cam_pos, m_cam_dir + m_cam_pos, m_cam_up);
+	mat4 view = lookAt(m_cam_pos, m_cam_dir + m_cam_pos, m_cam_up);
+	// ################################################################################################
 
-	// draw options
+
+	// ################### draw options ###########################
 	if (m_show_grid) cgra::drawGrid(view, proj);
 	if (m_show_axis) cgra::drawAxis(view, proj);
 	glPolygonMode(GL_FRONT_AND_BACK, (m_showWireframe) ? GL_LINE : GL_FILL);
+	// ############################################################
 
-	// draw the model
-	// m_model.draw(view, proj);
-	
+
+	// ####################################### Compute Shader call ############################################
 	m_computeShader.use();
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0 ,ssbo);
-	glUniform1f(glGetUniformLocation(m_computeShader.ID, "gridWidth"), m_voxelGrid.m_width);
+	
+	// Reset atomic counter
 	GLuint zero = 0;
 	glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, vertexCountBuffer);
 	glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint), &zero);
-	glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
+	// glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
+	// 
 
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, vbo);         // vertexPositions
-	glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 1, vertexCountBuffer);    // vertexCount
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssbo); 
-	// computeShader.setFloat("t", currentFrame);
+	// Set Binding points for all buffers
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0 ,ssbo);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1 ,ssbo2);
+	glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 2, vertexCountBuffer);
+	//
+
+	// Set Uniforms
 	static float time = glfwGetTime();
-	time = glfwGetTime();
+	glUniform1f(glGetUniformLocation(m_computeShader.ID, "time"), glfwGetTime());
+	time = glfwGetTime(); // Setting up time here to be passed as a uniform later
+	glUniform1f(glGetUniformLocation(m_computeShader.ID, "gridWidth"), m_voxelGrid.m_width);
+	//
 
+	// Compute Shader Dispatch
 	glDispatchCompute((unsigned int)m_voxelGrid.GetGridTotalCount()/ 100, 1, 1);
-
-	// make sure writing to image has finished before read
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_ATOMIC_COUNTER_BARRIER_BIT);
+	
+	// Read atomic counter value. This is more for  debugging. not needed actually. remove later
 	/*
 	*/
+	GLuint counterValue = 0;
+	// glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, vertexCountBuffer);
+	glGetBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint), &counterValue);
+	glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
+	// ########################################################################################################
 
+	// ###################################### Drawing, The graphics Pipeline #############################
 	glUseProgram(m_model.shader);
 	glUniformMatrix4fv(glGetUniformLocation(m_model.shader, "uProjectionMatrix"), 1, false, value_ptr(proj));
 	glUniform3fv(glGetUniformLocation(m_model.shader, "ucamPos"), 1, value_ptr(m_cam_pos));
 	glUniformMatrix4fv(glGetUniformLocation(m_model.shader, "uViewMatrix"), 1, false, value_ptr(view));
 	glBindVertexArray(m_model.mesh.vao);
-	glDrawElementsInstanced(m_model.mesh.mode, m_model.mesh.index_count, GL_UNSIGNED_INT, 0, drawCount);
-	// glUseProgram(m_model.shader);
-	// // glUniform1i(glGetUniformLocation(m_model.shader, "tex"), 0);
-	// // glActiveTexture(GL_TEXTURE0);
-	// // glBindTexture(GL_TEXTURE_2D, texture);
-	// glBindVertexArray(vao);
-	// glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, 0);
-	
+	glDrawElementsInstanced(m_model.mesh.mode, m_model.mesh.index_count, GL_UNSIGNED_INT, 0, counterValue);
+	// ###################################################################################################
+
 }
 
 
