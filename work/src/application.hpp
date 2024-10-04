@@ -71,7 +71,7 @@ private:
 	// contains a shader, a model transform
 	// a mesh, and other model information (color etc.)
 	basic_model m_model; 
-	VoxelGrid m_voxelGrid;
+	HeightMap m_heightMap;
 	ComputeShader m_computeShader;
 
 	glm::uint num_particles = 1000;

@@ -84,44 +84,10 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 	m_model.modelTransform = glm::mat4(1);
 
 
-	m_voxelGrid = VoxelGrid(glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 10.f, 6.f, 5.f }, 0.1f);
-	ivec3 size = m_voxelGrid.GetGridSize();
+	m_heightMap = HeightMap(glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 10.f, 6.f, 5.f }, 0.1f);
 	
 	m_computeShader = ComputeShader(CGRA_SRCDIR + std::string("//res//shaders//Compute.glsl"));
-	/*
-	for (int i = 0; i < size.x; i++) {
-		float temp = randomFloat(size.z * 0.35, size.z * 0.45); 
-		for (int j = 0; j < size.y; j++) {
-			for (int k = 0; k < temp; k++) {
-				m_voxelGrid.UpdateVoxel({i, j, k}, TERRAIN);
-			}
-			for (int k = temp; k < size.z * 0.6; k++) {
-				m_voxelGrid.UpdateVoxel({i, j, k}, TALL_CELL);
-			}
-		}
-	}
-	*/
-	// m_voxelGrid.Print();
-
-	/*
-	float vertices[] = {
-		-0.8f, -0.8f,  0.0f,  0.f, 0.f,
-		 0.8f, -0.8f,  0.0f,  1.f, 0.f,
-		-0.8f,  0.8f,  0.0f,  0.f, 1.f,
-		 0.8f,  0.8f,  0.0f,  1.f, 1.f,
-	};
 	
-	unsigned int indices[] = {
-		0, 1, 2, 1, 2, 3
-	};
-	glGenVertexArrays(1, &vao);
-	glGenBuffers(1, &vbo);
-	glGenBuffers(1, &ibo);
-	glBindVertexArray(vao);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(waterMeshVertex), nullptr, GL_DYNAMIC_DRAW);
-	glBindVertexArray(0);
-	*/
 	
 
 
@@ -132,25 +98,10 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 	glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), nullptr, GL_STREAM_DRAW);
 	glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
 	
-	// Unbind buffers
-	// glBindBuffer(GL_ARRAY_BUFFER, 0);
-	/*
-
-
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GL_FLOAT), (void*)0);
-
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GL_FLOAT), (void*) (3 * sizeof(GL_FLOAT)));
-	
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-	index_count = 6;
-	*/
 
 	glGenBuffers(1, &ssbo2);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo2);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, m_voxelGrid.GetGridTotalCount() * sizeof(waterMeshVertex), NULL, GL_DYNAMIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, m_heightMap.GetGridTotalCount() * sizeof(waterMeshVertex), NULL, GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 
@@ -159,20 +110,13 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 
 	glGenBuffers(1, &ssbo);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, m_voxelGrid.GetGridTotalCount() * sizeof(Voxel), NULL, GL_DYNAMIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, m_heightMap.GetGridTotalCount() * sizeof(Voxel), NULL, GL_DYNAMIC_DRAW);
 
 	GLint bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT ; // the invalidate makes a big difference when re-writing
-	/*
-	particle *points = (particle *) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, num_particles * sizeof(particle), bufMask );
-	for( int i = 0; i < num_particles; i++ ) {
-		points[i].pos = vec4(randomFloat(-1.f, 1.f), 0.f, randomFloat(-1.f, 1.f), 1.0f);
-		points[ i ].vel = vec4(0.f, 0.f, 0.f, 1.0f);
-
-	}
-	*/
-	glm::ivec3 voxelDim = m_voxelGrid.GetGridSize();
-	Voxel* voxels = (Voxel *)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, m_voxelGrid.GetGridTotalCount() * sizeof(Voxel), bufMask);
-	for (int i = 0; i < m_voxelGrid.GetGridTotalCount(); i++) {
+	
+	glm::ivec2 gridDim = m_heightMap.GetGridSize();
+	quantities* cellQuantity = (quantities *)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, m_heightMap.GetGridTotalCount() * sizeof(quantities), bufMask);
+	for (int i = 0; i < m_heightMap.GetGridTotalCount(); i++) {
 		uint x, y, z;
 		z = i / (voxelDim.x * voxelDim.y);
 		uint temp = i % (voxelDim.x * voxelDim.y);

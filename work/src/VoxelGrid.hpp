@@ -67,6 +67,10 @@ struct quantities {
 
 class HeightMap {
 	float m_width;
+	size_t m_gridCountX, m_gridCountY;
 	std::vector<std::vector<quantities>> m_grid;
-	
+	public:
+	HeightMap(glm::vec3 origin, glm::vec3 farEnd, float width);
+	glm::ivec2 GetGridSize() const { return glm::ivec2{m_gridCountX, m_gridCountY}; }
+	size_t GetGridTotalCount() const { return m_gridCountX * m_gridCountY; }
 };
