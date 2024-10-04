@@ -16,14 +16,20 @@ VoxelGrid::VoxelGrid(glm::vec3 origin, glm::vec3 farEnd, float width) {
 	
 	for (int i = 0; i < m_countX; i++) {
 		for (int j = 0; j < m_countY; j++) {
-			for (int k = 0; k < m_countZ; k++) {
-				m_grid[i][j][k] = Voxel(glm::ivec3{i, j, k}, AIR);
+			m_grid[i][j][0] = Voxel(glm::ivec3{i, j, 0}, TERRAIN, 10);
+			m_grid[i][j][1] = Voxel(glm::ivec3{i, j, 0}, TALL_CELL, 5) ;
+
+			for (int k = 2; k < 10; k++) {
+				m_grid[i][j][k] = Voxel(glm::ivec3{i, j, k}, REG_CELL, 1);
+			}
+			for (int k = 10; k < 16; k++) {
+				m_grid[i][j][k] = Voxel(glm::ivec3{i, j, k}, AIR, 1);
 			}
 		}
 	}
 }
 
-void VoxelGrid::UpdateVoxel(glm::ivec3 index, int type) {
+void VoxelGrid::UpdateVoxel(glm::ivec3 index, voxelType type) {
 	m_grid[index.x][index.y][index.z].UpdateType(type);
 }
 
@@ -40,9 +46,6 @@ void VoxelGrid::Print() const {
 	}
 }
 
-void Voxel::UpdateType(int type){
-	m_type = type;
-}
 
 std::string Voxel::GetType() const
 {

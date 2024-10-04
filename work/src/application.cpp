@@ -88,18 +88,19 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 	ivec3 size = m_voxelGrid.GetGridSize();
 	
 	m_computeShader = ComputeShader(CGRA_SRCDIR + std::string("//res//shaders//Compute.glsl"));
-
+	/*
 	for (int i = 0; i < size.x; i++) {
+		float temp = randomFloat(size.z * 0.35, size.z * 0.45); 
 		for (int j = 0; j < size.y; j++) {
-			float temp = randomFloat(0, size.z); 
 			for (int k = 0; k < temp; k++) {
 				m_voxelGrid.UpdateVoxel({i, j, k}, TERRAIN);
 			}
-			for (int k = temp; k < size.z; k++) {
+			for (int k = temp; k < size.z * 0.6; k++) {
 				m_voxelGrid.UpdateVoxel({i, j, k}, TALL_CELL);
 			}
 		}
 	}
+	*/
 	// m_voxelGrid.Print();
 
 	/*

@@ -40,13 +40,15 @@ uniform float time;
 
 void main() {
     voxel vox = gridData[gl_GlobalInvocationID.x];
-    vec4 position = vec4(gridWidth * vox.index, 1.0f);
-    uint vertexIndex = atomicCounterIncrement(vertexCount);
-    vertexPositions[vertexIndex].pos = position;
-    if(vox.type == TERRAIN) {
-        vertexPositions[vertexIndex].color = vec4(0.66f, 0.3f, 0.0f, 1.0f);
-    } else if (vox.type == TALL_CELL) {
-        vertexPositions[vertexIndex].color = vec4(0.0f, 1.0f, 1.0f, 0.4f);
+    if ( vox.type != AIR) {
+        vec4 position = vec4(gridWidth * vox.index, 1.0f);
+        uint vertexIndex = atomicCounterIncrement(vertexCount);
+        vertexPositions[vertexIndex].pos = position;
+        if(vox.type == TERRAIN) {
+            vertexPositions[vertexIndex].color = vec4(0.66f, 0.3f, 0.0f, 1.0f);
+        } else if (vox.type == TALL_CELL) {
+            vertexPositions[vertexIndex].color = vec4(0.0f, 1.0f, 1.0f, 0.4f);
+        }
     }
 
     /*
