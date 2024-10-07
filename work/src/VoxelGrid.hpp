@@ -10,6 +10,8 @@ enum voxelType {
 	REG_CELL = 2,
 	AIR = 3
 };
+
+
 struct Voxel {
 	public:
 		glm::ivec3 m_index;
@@ -25,8 +27,6 @@ struct Voxel {
 	};
 
 class VoxelGrid {
-
-
 public:
 	float m_width;
 	unsigned int m_countX, m_countY, m_countZ;
@@ -60,17 +60,20 @@ public:
 };
 */
 
-struct quantities {
-	glm::vec3 velocity;
+struct cellParams {
+	float velocity;
 	float height;
 };
 
 class HeightMap {
 	float m_width;
 	size_t m_gridCountX, m_gridCountY;
-	std::vector<std::vector<quantities>> m_grid;
+	std::vector<std::vector<cellParams>> m_grid;
 	public:
 	HeightMap(glm::vec3 origin, glm::vec3 farEnd, float width);
+	HeightMap() : HeightMap(glm::vec3{0.f, 0.f, 0.f}, glm::vec3{ 1.f, 1.f, 1.f }, 0.1f) {};
+	cellParams Get(size_t x, size_t y) const { return m_grid[x][y]; }	
 	glm::ivec2 GetGridSize() const { return glm::ivec2{m_gridCountX, m_gridCountY}; }
 	size_t GetGridTotalCount() const { return m_gridCountX * m_gridCountY; }
+	float GetGridWidth() const { return m_width; }
 };

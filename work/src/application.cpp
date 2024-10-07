@@ -67,7 +67,7 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 	
 	// build the shader for the model
 	shader_builder color_sb;
-	color_sb.set_shader(GL_VERTEX_SHADER, CGRA_SRCDIR + std::string("//res//shaders//default_vert.glsl"));
+	color_sb.set_shader(GL_VERTEX_SHADER, CGRA_SRCDIR + std::string("//res//shaders//HeightMapVert.glsl"));
 	color_sb.set_shader(GL_FRAGMENT_SHADER, CGRA_SRCDIR + std::string("//res//shaders//default_frag.glsl"));
 	GLuint color_shader = color_sb.build();
 
@@ -86,7 +86,7 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 
 	m_heightMap = HeightMap(glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 10.f, 6.f, 5.f }, 0.1f);
 	
-	m_computeShader = ComputeShader(CGRA_SRCDIR + std::string("//res//shaders//Compute.glsl"));
+	m_computeShader = ComputeShader(CGRA_SRCDIR + std::string("//res//shaders//HeightMapCompute.glsl"));
 	
 	
 
@@ -110,21 +110,21 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 
 	glGenBuffers(1, &ssbo);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, m_heightMap.GetGridTotalCount() * sizeof(Voxel), NULL, GL_DYNAMIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, m_heightMap.GetGridTotalCount() * sizeof(cellParams), NULL, GL_DYNAMIC_DRAW);
 
 	GLint bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT ; // the invalidate makes a big difference when re-writing
 	
 	glm::ivec2 gridDim = m_heightMap.GetGridSize();
-	quantities* cellQuantity = (quantities *)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, m_heightMap.GetGridTotalCount() * sizeof(quantities), bufMask);
+	cellParams* cellParam = (cellParams *)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, m_heightMap.GetGridTotalCount() * sizeof(cellParams), bufMask);
+	/*
+	*/
 	for (int i = 0; i < m_heightMap.GetGridTotalCount(); i++) {
-		uint x, y, z;
-		z = i / (voxelDim.x * voxelDim.y);
-		uint temp = i % (voxelDim.x * voxelDim.y);
-		y = temp / voxelDim.x;
-		x = temp % voxelDim.x;
+		uint x, y;
+		// Linear idx = y * X_size + X
+		y = i / gridDim.x;
+		x = i % gridDim.x;
 
-		voxels[i] = m_voxelGrid.m_grid[x][y][z];
-
+		cellParam[i] = m_heightMap.Get(x, y);
 	}
 
  	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
@@ -195,13 +195,18 @@ void Application::render() {
 	static float time = glfwGetTime();
 	glUniform1f(glGetUniformLocation(m_computeShader.ID, "time"), glfwGetTime());
 	time = glfwGetTime(); // Setting up time here to be passed as a uniform later
-	glUniform1f(glGetUniformLocation(m_computeShader.ID, "gridWidth"), m_voxelGrid.m_width);
+	glUniform1f(glGetUniformLocation(m_computeShader.ID, "gridWidth"), m_heightMap.GetGridWidth());
+	glUniform1i(glGetUniformLocation(m_computeShader.ID, "gridCountX"), m_heightMap.GetGridSize().x);
+	glUniform1i(glGetUniformLocation(m_computeShader.ID, "gridCountY"), m_heightMap.GetGridSize().y);
+	glUniform1i(glGetUniformLocation(m_computeShader.ID, "Pulse"), (int)m_simPulse);
 	//
 
 	// Compute Shader Dispatch
-	glDispatchCompute((unsigned int)m_voxelGrid.GetGridTotalCount()/ 100, 1, 1);
+	auto dispatchSize = (unsigned int)m_heightMap.GetGridSize().x / 10;
+	glDispatchCompute((unsigned int)(m_heightMap.GetGridSize().x / 10), (unsigned int)(m_heightMap.GetGridSize().y / 10), 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_ATOMIC_COUNTER_BARRIER_BIT);
 	
+	m_simPulse = false;
 	// Read atomic counter value. This is more for  debugging. not needed actually. remove later
 	/*
 	*/
@@ -216,8 +221,10 @@ void Application::render() {
 	glUniformMatrix4fv(glGetUniformLocation(m_model.shader, "uProjectionMatrix"), 1, false, value_ptr(proj));
 	glUniform3fv(glGetUniformLocation(m_model.shader, "ucamPos"), 1, value_ptr(m_cam_pos));
 	glUniformMatrix4fv(glGetUniformLocation(m_model.shader, "uViewMatrix"), 1, false, value_ptr(view));
+	glUniform1i(glGetUniformLocation(m_model.shader, "gridCountX"), m_heightMap.GetGridSize().x);
+	glUniform1i(glGetUniformLocation(m_model.shader, "gridCountY"), m_heightMap.GetGridSize().y);
 	glBindVertexArray(m_model.mesh.vao);
-	glDrawElementsInstanced(m_model.mesh.mode, m_model.mesh.index_count, GL_UNSIGNED_INT, 0, counterValue);
+	glDrawElementsInstanced(m_model.mesh.mode, m_model.mesh.index_count, GL_UNSIGNED_INT, 0, m_heightMap.GetGridTotalCount());
 	// ###################################################################################################
 
 }
@@ -234,8 +241,7 @@ void Application::renderGUI() {
 	ImGui::Text("Application %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 	ImGui::SliderFloat("Cam speed", &m_cam_speed, 0, 0.5, "%.3f");
 	ImGui::SliderFloat("Cam Rot speed", &m_cam_rotation_scale, 0, 0.5, "%.3f");
-	ImGui::SliderFloat3("Model Color", value_ptr(m_model.color), 0, 1, "%.2f");
-
+	if (ImGui::Button("Pulse")) m_simPulse = true;
 	// extra drawing parameters
 	ImGui::SliderInt("N Render", &drawCount, 1, num_particles);
 	int prevLatDiv = m_latDivision;

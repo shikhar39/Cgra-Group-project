@@ -63,7 +63,7 @@ private:
 	bool m_showWireframe = false;
 
 	//Shape properties
-	float m_sp_rad = 0.1f;
+	float m_sp_rad = 0.05f;
 	int m_latDivision = 8;
 	int m_longDivision = 8;
 
@@ -81,13 +81,9 @@ private:
 	GLuint vertexCountBuffer;
 	GLuint ssbo = 0;
 	GLuint ssbo2 = 0;
-	/*
-	GLuint vao = 0;
-	GLuint vbo = 0;
-	GLuint ibo = 0;
-	GLenum mode = 0; // mode to draw in, eg: GL_TRIANGLES
-	int index_count = 0; // how many indicies to draw (no primitives)
-	*/
+	
+	bool m_simPulse = false;
+
 
 public:
 	// setup
