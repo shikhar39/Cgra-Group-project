@@ -66,7 +66,7 @@ HeightMap::HeightMap(glm::vec3 origin, glm::vec3 farEnd, float width) {
 
 	for(int i = 0; i < m_gridCountX; i++) {
 		for (int j = 0; j < m_gridCountY; j++) {
-			m_grid[i][j] = {0.f, 10};
+			m_grid[i][j] = {0.f, 10, 0.f};
 		}
 	}
 

@@ -84,10 +84,16 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 	m_model.modelTransform = glm::mat4(1);
 
 
-	m_heightMap = HeightMap(glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 10.f, 6.f, 5.f }, 0.1f);
-	
-	m_computeShader = ComputeShader(CGRA_SRCDIR + std::string("//res//shaders//HeightMapCompute.glsl"));
-	
+	m_heightMap = HeightMap(glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 30.f, 15.f, 5.f }, 0.1f);
+	for (int i = 200; i < 240; i++) {
+		for (int j = 80; j < 120; j++) {
+			float a = (i - 200) > (240 - i) ? (240 - i) : (i - 200);
+			float b = 20 - abs(220 - i) + abs(100 - j);
+			m_heightMap.SetTerrainHeight({i,j}, 10 + 0.1 * a);
+		}
+	}
+	m_computeShader1 = ComputeShader(CGRA_SRCDIR + std::string("//res//shaders//HeightMapCompute1.glsl"));
+	m_computeShader2 = ComputeShader(CGRA_SRCDIR + std::string("//res//shaders//HeightMapCompute2.glsl"));
 	
 
 
@@ -176,7 +182,7 @@ void Application::render() {
 
 
 	// ####################################### Compute Shader call ############################################
-	m_computeShader.use();
+	m_computeShader1.use();
 	
 	// Reset atomic counter
 	GLuint zero = 0;
@@ -193,27 +199,46 @@ void Application::render() {
 
 	// Set Uniforms
 	static float time = glfwGetTime();
-	glUniform1f(glGetUniformLocation(m_computeShader.ID, "time"), glfwGetTime());
-	time = glfwGetTime(); // Setting up time here to be passed as a uniform later
-	glUniform1f(glGetUniformLocation(m_computeShader.ID, "gridWidth"), m_heightMap.GetGridWidth());
-	glUniform1i(glGetUniformLocation(m_computeShader.ID, "gridCountX"), m_heightMap.GetGridSize().x);
-	glUniform1i(glGetUniformLocation(m_computeShader.ID, "gridCountY"), m_heightMap.GetGridSize().y);
-	glUniform1i(glGetUniformLocation(m_computeShader.ID, "Pulse"), (int)m_simPulse);
+	glUniform1f(glGetUniformLocation(m_computeShader1.ID, "time"), glfwGetTime());
+	glUniform1f(glGetUniformLocation(m_computeShader1.ID, "gridWidth"), m_heightMap.GetGridWidth());
+	glUniform1i(glGetUniformLocation(m_computeShader1.ID, "gridCountX"), m_heightMap.GetGridSize().x);
+	glUniform1i(glGetUniformLocation(m_computeShader1.ID, "gridCountY"), m_heightMap.GetGridSize().y);
+	glUniform1i(glGetUniformLocation(m_computeShader1.ID, "Pulse"), (int)m_simPulse);
 	//
 
 	// Compute Shader Dispatch
 	auto dispatchSize = (unsigned int)m_heightMap.GetGridSize().x / 10;
 	glDispatchCompute((unsigned int)(m_heightMap.GetGridSize().x / 10), (unsigned int)(m_heightMap.GetGridSize().y / 10), 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_ATOMIC_COUNTER_BARRIER_BIT);
+
+
+	m_computeShader2.use();
 	
+	glUniform1f(glGetUniformLocation(m_computeShader2.ID, "time"), glfwGetTime());
+	glUniform1f(glGetUniformLocation(m_computeShader2.ID, "gridWidth"), m_heightMap.GetGridWidth());
+	glUniform1i(glGetUniformLocation(m_computeShader2.ID, "gridCountX"), m_heightMap.GetGridSize().x);
+	glUniform1i(glGetUniformLocation(m_computeShader2.ID, "gridCountY"), m_heightMap.GetGridSize().y);
+	glUniform1i(glGetUniformLocation(m_computeShader2.ID, "Pulse"), (int)m_simPulse);
+	glUniform1f(glGetUniformLocation(m_computeShader2.ID, "Dampening"), m_dampening);
+
+	//
+
+	// Compute Shader Dispatch
+	// auto dispatchSize = (unsigned int)m_heightMap.GetGridSize().x / 10;
+	glDispatchCompute((unsigned int)(m_heightMap.GetGridSize().x / 10), (unsigned int)(m_heightMap.GetGridSize().y / 10), 1);
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_ATOMIC_COUNTER_BARRIER_BIT);
+	
+
+
+	time = glfwGetTime(); // Setting up time here to be passed as a uniform later
 	m_simPulse = false;
 	// Read atomic counter value. This is more for  debugging. not needed actually. remove later
 	/*
 	*/
-	GLuint counterValue = 0;
-	// glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, vertexCountBuffer);
-	glGetBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint), &counterValue);
-	glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
+	// GLuint counterValue = 0;
+	// // glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, vertexCountBuffer);
+	// glGetBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint), &counterValue);
+	// glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
 	// ########################################################################################################
 
 	// ###################################### Drawing, The graphics Pipeline #############################
@@ -241,7 +266,9 @@ void Application::renderGUI() {
 	ImGui::Text("Application %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 	ImGui::SliderFloat("Cam speed", &m_cam_speed, 0, 0.5, "%.3f");
 	ImGui::SliderFloat("Cam Rot speed", &m_cam_rotation_scale, 0, 0.5, "%.3f");
-	if (ImGui::Button("Pulse")) m_simPulse = true;
+	if (ImGui::Button("Pulse")) m_simPulse = !m_simPulse;
+	ImGui::SliderFloat("Wave Dampening", &m_dampening, 0.95, 1.0, "%.3f");
+
 	// extra drawing parameters
 	ImGui::SliderInt("N Render", &drawCount, 1, num_particles);
 	int prevLatDiv = m_latDivision;

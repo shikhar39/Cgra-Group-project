@@ -72,7 +72,9 @@ private:
 	// a mesh, and other model information (color etc.)
 	basic_model m_model; 
 	HeightMap m_heightMap;
-	ComputeShader m_computeShader;
+	ComputeShader m_computeShader1;
+	ComputeShader m_computeShader2;
+
 
 	glm::uint num_particles = 1000;
 	int drawCount = 100; 
@@ -83,7 +85,7 @@ private:
 	GLuint ssbo2 = 0;
 	
 	bool m_simPulse = false;
-
+	float m_dampening = 0.95;
 
 public:
 	// setup

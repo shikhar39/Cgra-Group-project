@@ -63,6 +63,7 @@ public:
 struct cellParams {
 	float velocity;
 	float height;
+	float terrainHeight;
 };
 
 class HeightMap {
@@ -72,6 +73,9 @@ class HeightMap {
 	public:
 	HeightMap(glm::vec3 origin, glm::vec3 farEnd, float width);
 	HeightMap() : HeightMap(glm::vec3{0.f, 0.f, 0.f}, glm::vec3{ 1.f, 1.f, 1.f }, 0.1f) {};
+
+	void SetTerrainHeight(glm::ivec2 index, float height) {m_grid[index.x][index.y].terrainHeight = height; };
+
 	cellParams Get(size_t x, size_t y) const { return m_grid[x][y]; }	
 	glm::ivec2 GetGridSize() const { return glm::ivec2{m_gridCountX, m_gridCountY}; }
 	size_t GetGridTotalCount() const { return m_gridCountX * m_gridCountY; }
